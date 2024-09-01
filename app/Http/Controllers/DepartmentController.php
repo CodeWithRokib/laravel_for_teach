@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Department;
+use Storage;
 
 class DepartmentController extends Controller
 {
@@ -21,20 +22,20 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
-        $validateData = $request->validate([
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:png,jgp,jpeg,gif,svg|max:2048',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // Validate image
         ]);
-        
-        if($request->hashFile('image')){
-            $imageName = time(). '.' . $request->image->extension();
-            $request->image->move(public_path('images', $imageName));
-            $validateData['image']=$imageName;
+
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('images', 'public');
+            $validatedData['image'] = $imagePath;
         }
 
-        Department::create($validateData);
-        return redirect()->route('departments.index')->with('success','Department created Successfully');
+        Department::create($validatedData);
+
+        return redirect()->route('departments.index')->with('success', 'Department created successfully!');
     }
 
     public function show(Department $department)
@@ -49,28 +50,33 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
-        $validateData = $request->validate([
+        $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:png,jgp,jpeg,gif,svg|max:2048',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:2048', // Validate image
         ]);
 
-        if($request->hasFile('image')){
-           if($department->image && file_exists(public_path('images/'.$department->image)));
-           unlink(public_path('images/'.$department->image));
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($department->image && Storage::exists('public/' . $department->image)) {
+                Storage::delete('public/' . $department->image);
+            }
 
-           $imageName = time(). '.'. $request->image->extension();
-           $request->image->move(public_path('images', $imageName));
-           $validateData['image'] = $imageName;
+            // Store new image
+            $imagePath = $request->file('image')->store('images', 'public');
+            $validatedData['image'] = $imagePath;
         }
-        
-        $department->update($validateData);
-        return redirect()->route('departments.index')->with('success','Update data successfull');
-        
+
+        $department->update($validatedData);
+
+        return redirect()->route('departments.index')->with('success', 'Department updated successfully!');
     }
 
     public function destroy(Department $department)
     {
+        if ($department->image && Storage::exists('public/' . $department->image)) {
+            Storage::delete('public/' . $department->image);
+        }
         $department->delete();
         return redirect()->back()->with('success','Department Deleted Successfully');
     }
