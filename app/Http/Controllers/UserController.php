@@ -6,54 +6,26 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-
-    public function register(Request $request)
-    {
         
     }
-    public function login(Request $request)
-    {
-        
+    public function register(Request $request){
+        $request->validate([
+            "name" => 'required|string|max:255',
+            "email" => 'required|string|unique:users|max:255',
+            "password" => 'required|string|max:5|confirmed',
+        ]);
+
+        $user = User::create([
+              'name'=>$request->name,
+              'email'=>$request->email,
+              'password'=>Hash::make($request->password),
+        ]);
+        return redirect()->back();
     }
 
-    public function show(string $id)
-    {
-        //
-    }
+    
 
-
-    public function edit(string $id)
-    {
-        //
-    }
-
-
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
 }
