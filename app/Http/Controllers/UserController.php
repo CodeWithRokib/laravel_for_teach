@@ -26,6 +26,17 @@ class UserController extends Controller
         return redirect()->back();
     }
 
-    
+    public function login(Request $request){
+           $request->validate([
+              "email" => 'required|string|email',
+              "password" => 'required',
+           ]);
+           $userCredential = $request->only('email','password');
+           if(Auth::attempt($userCredential)){
+            return redirect('/dashboard');
+           }else{
+            return back()->with('error','email and password is incorrect');
+           }
+    }
 
 }
